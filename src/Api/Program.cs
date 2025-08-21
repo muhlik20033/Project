@@ -71,8 +71,8 @@ app.MapPost("/api/upload", async (HttpRequest request, Repository repo, IMongoDa
     {
         string name = ws.Cell(r, 1).GetString().Trim();
         string unit = ws.Cell(r, 2).GetString().Trim();
-        decimal price = ws.Cell(r, 3).GetDecimal();
-        int qty = (int)ws.Cell(r, 4).GetDouble();
+        decimal price = ws.Cell(r, 3).GetValue<decimal>();
+        int qty = ws.Cell(r, 4).GetValue<int>();
 
         items.Add(new ProductItem
         {

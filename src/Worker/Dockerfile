@@ -7,7 +7,7 @@ RUN dotnet restore Worker/Worker.csproj
 RUN dotnet publish Worker/Worker.csproj -c Release -o /app
 
 # Runtime
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 COPY --from=build /app .
 ENTRYPOINT ["dotnet", "Worker.dll"]
