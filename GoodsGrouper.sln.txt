@@ -1,0 +1,1 @@
+# Run: dotnet new sln -n GoodsGrouper && dotnet sln add src/Api/Api.csproj src/Worker/Worker.csproj src/Shared/Shared.csproj

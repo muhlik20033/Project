@@ -1,0 +1,66 @@
+name: ci-cd
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore src/Api/Api.csproj && dotnet restore src/Worker/Worker.csproj && dotnet restore src/Shared/Shared.csproj
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: echo "no tests yet"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./src
+          file: ./src/Api/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/goods-grouper-api:latest
+
+      - name: Build and push Worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./src
+          file: ./src/Worker/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/goods-grouper-worker:latest
+
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            docker compose pull
+            docker compose up -d

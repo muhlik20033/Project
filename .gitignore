@@ -1,0 +1,23 @@
+
+# Build
+bin/
+obj/
+*.user
+*.swp
+*.suo
+*.userprefs
+*.ncrunchsolution
+*.ncrunchproject
+*.DS_Store
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Secrets
+**/appsettings.*.json
+.env

@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ./src
+      dockerfile: ./Api/Dockerfile
+    container_name: goods-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - postgres
+      - mongo
+      - rabbitmq
+      - redis
+    networks: [appnet]
+
+  worker:
+    build:
+      context: ./src
+    dockerfile: ./Worker/Dockerfile
+    container_name: goods-worker
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_QUEUE=grouping.start
+      - POSTGRES_CONNECTION=Host=postgres;Port=5432;Database=goods;Username=postgres;Password=postgres
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks: [appnet]
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=goods
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [appnet]
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    networks: [appnet]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks: [appnet]
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks: [appnet]
+
+  nginx:
+    image: nginx:1.27
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks: [appnet]
+
+volumes:
+  pgdata:
+  mongodata:
+
+networks:
+  appnet:
+    driver: bridge
